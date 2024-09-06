@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>תמלול אודיו קל ופשוט</title>
+    <title>QuickScribe - תמלול אודיו קל ופשוט</title>
     <style>
         :root {
             --primary-color: #4a90e2;
@@ -209,11 +209,55 @@
                 font-size: 0.8em;
             }
         }
+        .popup {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        .popup-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            width: 80%;
+            max-width: 600px;
+            position: relative;
+        }
+        .close-popup {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 1.5em;
+            cursor: pointer;
+        }
+        .api-key-button {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+        .api-key-button:hover, .api-key-button:focus {
+            background: linear-gradient(135deg, #2980b9 0%, #3498db 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>תמלול אודיו קל ופשוט</h1>
+        <h1>QuickScribe - תמלול אודיו קל ופשוט</h1>
+        
+        <button onclick="showPopup('apiKeyInstructions')" class="api-key-button">כיצד ליצור API KEY?</button>
         
         <div class="instructions-container">
             <button onclick="toggleInstructions()" class="instructions-toggle">הצג/הסתר הוראות</button>
@@ -272,6 +316,41 @@
         </div>
     </div>
 
+    <div id="apiKeyInstructions" class="popup">
+        <div class="popup-content">
+            <span class="close-popup" onclick="closePopup('apiKeyInstructions')">&times;</span>
+            <h2>כיצד ליצור API KEY?</h2>
+            <ol>
+                <li>גש לאתר <a href="https://console.groq.com" target="_blank">console.groq.com</a> והתחבר או צור חשבון חדש.</li>
+                <li>נווט לאזור "API Keys" בתפריט.</li>
+                <li>לחץ על "Create API Key" או "Create New API Key".</li>
+                <li>תן שם למפתח החדש ולחץ על כפתור האישור.</li>
+                <li>העתק את המפתח שנוצר ושמור אותו במקום בטוח.</li>
+                <li>הזן את המפתח שהעתקת באתר שלנו.</li>
+            </ol>
+            <p><strong>חשוב:</strong> שמור על סודיות המפתח ואל תשתף אותו עם אף אחד.</p>
+        </div>
+    </div>
+
+    <div id="instructionsPopup" class="popup">
+        <div class="popup-content">
+            <span class="close-popup" onclick="closePopup('instructionsPopup')">&times;</span>
+            <h2>איך זה עובד?</h2>
+            <ol>
+                <li>בחרו קובץ אודיו מהמחשב שלכם</li>
+                <li>בחרו כמה מילים תרצו בכל כתובית</li>
+                <li>לחצו על כפתור "תמלול" והמתינו לתוצאות</li>
+                <li>צפו בתוצאות בפורמט SRT או כטקסט רגיל</li>
+                <li>העתיקו או הורידו את התמלול לשימוש עתידי</li>
+            </ol>
+            <h3>הגבלות:</h3>
+            <ul>
+                <li>סוגי קבצים נתמכים: MP3, MP4, MPEG, MPGA, M4A, WAV, WEBM</li>
+                <li>גודל קובץ מקסימלי: 25 MB</li>
+            </ul>
+        </div>
+    </div>
+
     <script>
         let transcriptionResult;
         let apiKey;
@@ -280,6 +359,7 @@
             try {
                 apiKey = localStorage.getItem('groqApiKey');
                 if (!apiKey) {
+                    showPopup('apiKeyInstructions');
                     apiKey = prompt('אנא הזן את ה-API Key שלך:\n\nשים לב: ה-API Key יישמר במחשב שלך לשימוש עתידי.');
                     if (apiKey) {
                         localStorage.setItem('groqApiKey', apiKey);
@@ -443,13 +523,16 @@
             URL.revokeObjectURL(url);
         }
 
+        function showPopup(popupId) {
+            document.getElementById(popupId).style.display = 'block';
+        }
+
+        function closePopup(popupId) {
+            document.getElementById(popupId).style.display = 'none';
+        }
+
         function toggleInstructions() {
-            const instructions = document.getElementById('instructions');
-            if (instructions.style.display === 'none') {
-                instructions.style.display = 'block';
-            } else {
-                instructions.style.display = 'none';
-            }
+            showPopup('instructionsPopup');
         }
 
         document.getElementById('wordsPerSubtitle').addEventListener('change', () => {
