@@ -261,9 +261,40 @@
             border-radius: var(--border-radius);
             display: none;
         }
+        .credit {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #3a7bc8 100%);
+            color: white;
+            text-align: center;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 95%;
+            max-width: 800px;
+        }
+
+        .credit p {
+            margin: 0;
+            font-size: 0.9em;
+        }
+
+        .credit a {
+            color: var(--secondary-color);
+            text-decoration: none;
+            font-weight: bold;
+            transition: color 0.3s ease;
+        }
+
+        .credit a:hover {
+            color: #ffffff;
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
+    <div class="credit">
+        <p>הכלי פותח על ידי שחר גולן | רוצים ללמוד AI? <a href="https://www.youtube.com/@sgolan20" target="_blank">עקבו אחרי בערוץ היוטיוב</a></p>
+    </div>
     <div class="container">
         <h1>QuickScribe - תמלול אודיו קל ופשוט</h1>
         
