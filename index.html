@@ -235,10 +235,11 @@
     <!-- Popups -->
     <div id="apiKeyPopup" class="popup">
         <div class="popup-content">
-            <h2>סטטוס API Key</h2>
-            <p id="apiKeyStatus"></p>
+            <h2>הגדר API Key</h2>
+            <input type="text" id="apiKeyInput" placeholder="הזן API Key">
             <div class="popup-footer">
-                <button class="control-button" onclick="closePopup('apiKeyPopup')">סגור</button>
+                <button class="control-button" onclick="saveApiKey()">שמור</button>
+                <button class="control-button" onclick="closePopup('apiKeyPopup')">ביטול</button>
             </div>
         </div>
     </div>
@@ -258,7 +259,7 @@
                     <i class="fas fa-microphone"></i> התחל הקלטה
                 </button>
                 <div id="recordingStatus" style="display: none;">
-                    <p>יש הקלטה בזכרון</p>
+                    <p>יש הקלטה בזיכרון</p>
                     <button class="control-button" onclick="deleteRecording()">מחק הקלטה</button>
                 </div>
             </div>
@@ -295,7 +296,7 @@
                 <li>היכנסו לאתר <a href="https://console.groq.com" target="_blank">console.groq.com</a></li>
                 <li>הירשמו או התחברו לחשבון</li>
                 <li>לחצו על "Create API Key"</li>
-                <li>העתיקו את המפתח שנצר</li>
+                <li>העתיקו את המפתח שנוצר</li>
             </ol>
             <h3>איך להשתמש באתר:</h3>
             <ol>
@@ -324,12 +325,13 @@
 
     <script>
         let transcriptionResult;
-        const apiKey = 'YOUR_API_KEY_PLACEHOLDER'; // זה יוחלף בזמן הבנייה
+        let apiKey;
         let audioBlob;
         let mediaRecorder;
         let isRecording = false;
-        let audioSource = null;
+        let audioSource = null; // 'file' או 'record'
 
+        let originalApiKey = '';
         let originalAudioFile = null;
         let originalAudioBlob = null;
         let originalWordsPerSubtitle = '8';
@@ -337,14 +339,27 @@
         let selectedFile = null;
 
         function showPopup(popupId) {
-            if (popupId === 'apiKeyPopup') {
-                updateApiKeyStatus();
-            }
             document.getElementById(popupId).style.display = 'flex';
+            if (popupId === 'apiKeyPopup') {
+                originalApiKey = document.getElementById('apiKeyInput').value;
+            } else if (popupId === 'audioInputPopup') {
+                // איפוס הבחירה הקודמת
+                document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(content => content.style.display = 'none');
+                audioSource = null;
+                selectedFile = null;
+                audioBlob = null;
+                updateRecordingStatus();
+            } else if (popupId === 'settingsPopup') {
+                originalWordsPerSubtitle = document.getElementById('wordsPerSubtitle').value;
+            }
         }
 
         function closePopup(popupId) {
-            if (popupId === 'audioInputPopup') {
+            // ביטול השינויים
+            if (popupId === 'apiKeyPopup') {
+                document.getElementById('apiKeyInput').value = originalApiKey;
+            } else if (popupId === 'audioInputPopup') {
                 document.getElementById('audioFile').value = '';
                 if (originalAudioFile) {
                     const dataTransfer = new DataTransfer();
@@ -359,14 +374,15 @@
             document.getElementById(popupId).style.display = 'none';
         }
 
-        function updateApiKeyStatus() {
-            const statusElement = document.getElementById('apiKeyStatus');
-            if (apiKey && apiKey !== 'YOUR_API_KEY_PLACEHOLDER') {
-                statusElement.textContent = 'API Key תקין ומוכן לשימוש.';
-                statusElement.style.color = 'green';
+        function saveApiKey() {
+            const inputApiKey = document.getElementById('apiKeyInput').value.trim();
+            if (inputApiKey) {
+                localStorage.setItem('groqApiKey', inputApiKey);
+                apiKey = inputApiKey;
+                showMessage('ה-API Key נשמר בהצלחה!');
+                document.getElementById('apiKeyPopup').style.display = 'none';
             } else {
-                statusElement.textContent = 'API Key לא נטען. אנא פנה למנהל המערכת.';
-                statusElement.style.color = 'red';
+                showMessage('אנא הזן API Key תקין');
             }
         }
 
@@ -464,9 +480,22 @@
             }
         }
 
+        async function loadApiKey() {
+            try {
+                apiKey = localStorage.getItem('groqApiKey');
+                if (apiKey) {
+                    document.getElementById('apiKeyInput').value = apiKey;
+                }
+            } catch (error) {
+                console.error('שגיאה בטעינת API Key:', error);
+                apiKey = null;
+            }
+        }
+
         async function transcribe() {
-            if (apiKey === 'YOUR_API_KEY_PLACEHOLDER') {
-                showMessage('API Key לא הוגדר כראוי. אנא פנה למנהל המערכת.');
+            if (!apiKey) {
+                showMessage('אנא הגדר API Key תחילה');
+                showPopup('apiKeyPopup');
                 return;
             }
 
@@ -500,11 +529,6 @@
                         showMessage(`מתמלל חלק ${i + 1} מתוך ${audioChunks.length}...`, 0);
                         const chunkResult = await transcribeChunk(audioChunks[i]);
                         transcriptionResult.segments = transcriptionResult.segments.concat(chunkResult.segments);
-                        
-                        if (i < audioChunks.length - 1) {
-                            showMessage(`ממתין 2 דקות לפני תמלול החלק הבא...`, 0);
-                            await new Promise(resolve => setTimeout(resolve, 120000)); // המתנה של 2 דקות
-                        }
                     }
                 } else {
                     transcriptionResult = await transcribeChunk(audioFile);
@@ -515,6 +539,8 @@
             } catch (error) {
                 console.error('שגיאה בתמלול:', error);
                 showMessage('אירעה שגיאה בתמלול. אנא בדוק את ה-API Key שלך ונסה שוב.');
+                localStorage.removeItem('groqApiKey');
+                apiKey = null;
             } finally {
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('transcribeButton').disabled = false;
@@ -573,13 +599,9 @@
                 transcriptionResult.segments.forEach((segment) => {
                     const subtitles = splitIntoSubtitles(segment.text, segment.start, segment.end, wordsPerSubtitle);
                     subtitles.forEach((subtitle) => {
-                        srtFormat += `${subtitleIndex}
-`;
-                        srtFormat += `${formatTime(subtitle.start)} --> ${formatTime(subtitle.end)}
-`;
-                        srtFormat += `${subtitle.text}
-
-`;
+                        srtFormat += `${subtitleIndex}\n`;
+                        srtFormat += `${formatTime(subtitle.start)} --> ${formatTime(subtitle.end)}\n`;
+                        srtFormat += `${subtitle.text}\n\n`;
                         plainText += subtitle.text + ' ';
                         subtitleIndex++;
                     });
@@ -757,8 +779,8 @@
             return result.choices[0].message.content;
         }
 
-        // קריאה לפונקציית אתחול
-        document.addEventListener('DOMContentLoaded', updateApiKeyStatus);
+        // קריאה לפונקציות אתחול
+        loadApiKey();
     </script>
 </body>
 </html>
