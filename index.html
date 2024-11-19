@@ -1,786 +1,1551 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>QuickScribe - תמלול אודיו חכם</title>
-    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link
+      href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
     <style>
-        :root {
-            --primary-color: #3498db;
-            --secondary-color: #2ecc71;
-            --background-color: #f5f7fa;
-            --text-color: #34495e;
-            --card-background: #ffffff;
-            --border-radius: 12px;
-            --transition: all 0.3s ease;
+      :root {
+        --primary-color: #3498db;
+        --secondary-color: #2ecc71;
+        --background-color: #f5f7fa;
+        --text-color: #34495e;
+        --card-background: #ffffff;
+        --border-radius: 12px;
+        --transition: all 0.3s ease;
+      }
+      body {
+        font-family: "Heebo", sans-serif;
+        background-color: var(--background-color);
+        color: var(--text-color);
+        margin: 0;
+        padding: 20px;
+        line-height: 1.6;
+      }
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      h1 {
+        color: var(--primary-color);
+        text-align: center;
+        font-size: 2.5em;
+        margin-bottom: 30px;
+      }
+      .card {
+        position: relative;
+        background-color: var(--card-background);
+        border-radius: var(--border-radius);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        margin-bottom: 20px;
+        transition: var(--transition);
+        display: flex;
+        flex-direction: column;
+      }
+      .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+      }
+      .control-button {
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: var(--border-radius);
+        cursor: pointer;
+        font-size: 1em;
+        transition: var(--transition);
+        width: 100%;
+        margin-bottom: 10px;
+      }
+      .control-button:hover {
+        background-color: #2980b9;
+      }
+      #transcribeButton {
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 5px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
+      #transcribeButton:hover {
+        background-color: #45a049;
+      }
+      #transcribeButton.stop {
+        background-color: #f44336;
+      }
+      #transcribeButton.stop:hover {
+        background-color: #da190b;
+      }
+      #cancelTranscriptionButton {
+        background-color: #757575;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 5px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      #cancelTranscriptionButton:hover {
+        background-color: #616161;
+      }
+      #cancelTranscriptionButton i {
+        font-size: 14px;
+      }
+      .button-icon {
+        margin-left: 8px;
+      }
+      .popup {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
+      .popup-content {
+        background-color: var(--card-background);
+        padding: 30px;
+        border-radius: var(--border-radius);
+        max-width: 500px;
+        width: 90%;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+      .tab-buttons {
+        display: flex;
+        margin-bottom: 20px;
+      }
+      .tab-button {
+        flex: 1;
+        padding: 10px;
+        background-color: #ecf0f1;
+        border: none;
+        cursor: pointer;
+        transition: var(--transition);
+      }
+      .tab-button.active {
+        background-color: var(--primary-color);
+        color: white;
+      }
+      .tab-content {
+        display: none;
+        padding: 20px;
+        background-color: #ecf0f1;
+        border-radius: var(--border-radius);
+      }
+      .tab-content.active {
+        display: block;
+      }
+      #audioFile,
+      #apiKeyInput {
+        width: 100%;
+        padding: 10px;
+        margin-top: 10px;
+        border: 1px solid #bdc3c7;
+        border-radius: var(--border-radius);
+      }
+      .loader {
+        border: 5px solid #f3f3f3;
+        border-top: 5px solid var(--primary-color);
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 1s linear infinite;
+        margin: 20px auto;
+        display: none;
+      }
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
         }
-        body {
-            font-family: 'Heebo', sans-serif;
-            background-color: var(--background-color);
-            color: var(--text-color);
-            margin: 0;
-            padding: 20px;
-            line-height: 1.6;
+        100% {
+          transform: rotate(360deg);
         }
+      }
+      .credit {
+        text-align: center;
+        margin-top: 20px;
+        font-size: 0.9em;
+      }
+      @media (max-width: 600px) {
         .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
+          padding: 10px;
         }
         h1 {
-            color: var(--primary-color);
-            text-align: center;
-            font-size: 2.5em;
-            margin-bottom: 30px;
+          font-size: 2em;
         }
-        .card {
-            background-color: var(--card-background);
-            border-radius: var(--border-radius);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-            margin-bottom: 20px;
-            transition: var(--transition);
-        }
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-        }
-        .control-button {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: var(--border-radius);
-            cursor: pointer;
-            font-size: 1em;
-            transition: var(--transition);
-            width: 100%;
-            margin-bottom: 10px;
-        }
-        .control-button:hover {
-            background-color: #2980b9;
-        }
-        #transcribeButton {
-            background-color: var(--secondary-color);
-            font-size: 1.2em;
-            padding: 15px;
-        }
-        #transcribeButton:hover {
-            background-color: #27ae60;
-        }
-        .popup {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        .popup-content {
-            background-color: var(--card-background);
-            padding: 30px;
-            border-radius: var(--border-radius);
-            max-width: 500px;
-            width: 90%;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        .tab-buttons {
-            display: flex;
-            margin-bottom: 20px;
-        }
-        .tab-button {
-            flex: 1;
-            padding: 10px;
-            background-color: #ecf0f1;
-            border: none;
-            cursor: pointer;
-            transition: var(--transition);
-        }
-        .tab-button.active {
-            background-color: var(--primary-color);
-            color: white;
-        }
-        .tab-content {
-            display: none;
-            padding: 20px;
-            background-color: #ecf0f1;
-            border-radius: var(--border-radius);
-        }
-        .tab-content.active {
-            display: block;
-        }
-        #audioFile, #apiKeyInput {
-            width: 100%;
-            padding: 10px;
-            margin-top: 10px;
-            border: 1px solid #bdc3c7;
-            border-radius: var(--border-radius);
-        }
-        .loader {
-            border: 5px solid #f3f3f3;
-            border-top: 5px solid var(--primary-color);
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
-            display: none;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .credit {
-            text-align: center;
-            margin-top: 20px;
-            font-size: 0.9em;
-        }
-        @media (max-width: 600px) {
-            .container {
-                padding: 10px;
-            }
-            h1 {
-                font-size: 2em;
-            }
-        }
-        
-        .youtube-promo {
-            background-color: var(--primary-color);
-            color: white;
-            text-align: center;
-            padding: 10px;
-            margin-bottom: 20px;
-        }
-        
-        .youtube-promo a {
-            color: white;
-            text-decoration: underline;
-        }
-        
-        .help-button {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background-color: var(--secondary-color);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            font-size: 24px;
-            cursor: pointer;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            transition: var(--transition);
-        }
-        
-        .help-button:hover {
-            transform: scale(1.1);
-        }
+      }
+
+      .youtube-promo {
+        background-color: var(--primary-color);
+        color: white;
+        text-align: center;
+        padding: 10px;
+        margin-bottom: 20px;
+      }
+
+      .youtube-promo a {
+        color: white;
+        text-decoration: underline;
+      }
+
+      .help-button {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background-color: var(--secondary-color);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        font-size: 24px;
+        cursor: pointer;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        transition: var(--transition);
+      }
+
+      .help-button:hover {
+        transform: scale(1.1);
+      }
+      .progress-container {
+        margin: 20px 0;
+        display: none;
+      }
+
+      .progress-bar {
+        width: 100%;
+        height: 20px;
+        background-color: #ecf0f1;
+        border-radius: var(--border-radius);
+        overflow: hidden;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background-color: var(--primary-color);
+        width: 0%;
+        transition: width 0.3s ease;
+      }
+
+      .progress-text {
+        text-align: center;
+        margin-top: 5px;
+        font-size: 0.9em;
+        color: var(--text-color);
+      }
+
+      .transcription-container {
+        position: relative;
+        max-height: 200px;
+        overflow: hidden;
+        transition: max-height 0.3s ease;
+        margin-bottom: 40px;
+      }
+
+      .transcription-container.expanded {
+        max-height: none;
+        margin-bottom: 10px;
+      }
+
+      .expand-button {
+        position: absolute;
+        bottom: -35px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        padding: 5px 15px;
+        border-radius: var(--border-radius);
+        cursor: pointer;
+        z-index: 1;
+        transition: all 0.3s ease;
+      }
+
+      .expanded .expand-button {
+        position: static;
+        transform: none;
+        margin: 10px auto;
+        display: block;
+      }
+
+      .transcription-fade {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 50px;
+        background: linear-gradient(transparent, var(--card-background));
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+      }
+
+      .expanded .transcription-fade {
+        display: none;
+      }
+
+      .transcribe-controls {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        margin: 15px 0;
+      }
+      .transcription-container {
+        position: relative;
+        max-height: 200px;
+        overflow: hidden;
+        transition: max-height 0.3s ease;
+      }
+
+      .transcription-container.expanded {
+        max-height: none;
+      }
+
+      .expand-button {
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        padding: 5px 15px;
+        border-radius: var(--border-radius);
+        cursor: pointer;
+        z-index: 1;
+      }
+
+      .expand-button::before {
+        content: "⌄";
+        display: inline-block;
+        margin-right: 5px;
+        transition: transform 0.3s ease;
+      }
+
+      .expanded .expand-button::before {
+        transform: rotate(180deg);
+      }
+
+      .transcription-fade {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 50px;
+        background: linear-gradient(transparent, var(--card-background));
+        pointer-events: none;
+      }
+
+      .control-button:disabled {
+        cursor: not-allowed;
+        opacity: 0.5;
+      }
+
+      /* הוספת סגנון חדש */
+      .transcription-card {
+        display: none; /* מוסתר כברירת מחדל */
+      }
+
+      .transcription-card.has-content {
+        display: block; /* יוצג רק כשיש תוכן */
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="youtube-promo">
-        רוצים ללמוד AI? הירשמו <a href="https://www.youtube.com/@sgolan20" target="_blank">לערוץ היוטיוב של שחר גולן</a>
+      רוצים ללמוד AI? הירשמו
+      <a href="https://www.youtube.com/@sgolan20" target="_blank"
+        >לערוץ היוטיוב של שחר גולן</a
+      >
     </div>
 
     <div class="container">
-        <h1>QuickScribe - תמלול אודיו חכם</h1>
-        
-        <div class="card">
-            <button class="control-button" onclick="showPopup('apiKeyPopup')">
-                <i class="fas fa-key"></i> הגדר API Key
-            </button>
-            <button class="control-button" onclick="showPopup('audioInputPopup')">
-                <i class="fas fa-file-audio"></i> בחר מקור אודיו
-            </button>
-            <button class="control-button" onclick="showPopup('settingsPopup')">
-                <i class="fas fa-cog"></i> הגדרות
-            </button>
-        </div>
+      <h1>QuickScribe - תמלול אודיו חכם</h1>
 
-        <div class="card">
-            <button id="transcribeButton" onclick="transcribe()">התחל תמלול</button>
-            <div id="loader" class="loader"></div>
+      <div class="card">
+        <button class="control-button" onclick="showPopup('apiKeyPopup')">
+          <i class="fas fa-key"></i> הגדר API Key
+        </button>
+        <button class="control-button" onclick="showPopup('audioInputPopup')">
+          <i class="fas fa-file-audio"></i> בחר מקור אודיו
+        </button>
+        <button class="control-button" onclick="showPopup('settingsPopup')">
+          <i class="fas fa-cog"></i> הגדרות
+        </button>
+      </div>
+
+      <div class="card">
+        <button id="transcribeButton" onclick="transcribe()">התחל תמלול</button>
+        <div id="loader" class="loader"></div>
+        <div class="progress-container" id="progressContainer">
+          <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+          <div class="progress-text" id="progressText">0%</div>
         </div>
-        
-        <div class="card">
-            <div class="tab-buttons">
-                <button class="tab-button active" onclick="showTab('srt')">SRT</button>
-                <button class="tab-button" onclick="showTab('plainText')">טקסט רגיל</button>
-            </div>
-            <div id="srtContent" class="tab-content active">
-                <div id="srtTranscription"></div>
-            </div>
-            <div id="plainTextContent" class="tab-content">
-                <div id="plainTextTranscription"></div>
-            </div>
-            <button class="control-button" onclick="copyToClipboard()">
-                <i class="fas fa-copy"></i> העתק
-            </button>
-            <button class="control-button" onclick="downloadFile()">
-                <i class="fas fa-download"></i> הורד
-            </button>
-            <button class="control-button" onclick="summarizeTranscription()">
-                <i class="fas fa-compress-alt"></i> סכם
-            </button>
+      </div>
+
+      <div class="card transcription-card">
+        <div class="tab-buttons">
+          <button class="tab-button active" onclick="showTab('srt')">
+            SRT
+          </button>
+          <button class="tab-button" onclick="showTab('plainText')">
+            טקסט רגיל
+          </button>
         </div>
+        <div id="srtContent" class="tab-content active">
+          <div class="transcription-container">
+            <div id="srtTranscription"></div>
+            <div class="transcription-fade"></div>
+            <button class="expand-button" onclick="toggleTranscription(this)">
+              הצג הכל
+            </button>
+          </div>
+        </div>
+        <div id="plainTextContent" class="tab-content">
+          <div class="transcription-container">
+            <div id="plainTextTranscription"></div>
+            <div class="transcription-fade"></div>
+            <button class="expand-button" onclick="toggleTranscription(this)">
+              הצג הכל
+            </button>
+          </div>
+        </div>
+        <button class="control-button" onclick="copyToClipboard()">
+          <i class="fas fa-copy"></i> העתק
+        </button>
+        <button class="control-button" onclick="downloadFile()">
+          <i class="fas fa-download"></i> הורד
+        </button>
+        <button class="control-button" onclick="summarizeTranscription()">
+          <i class="fas fa-compress-alt"></i> סכם
+        </button>
+      </div>
     </div>
 
     <!-- Popups -->
     <div id="apiKeyPopup" class="popup">
-        <div class="popup-content">
-            <h2>הגדר API Key</h2>
-            <input type="text" id="apiKeyInput" placeholder="הזן API Key">
-            <div class="popup-footer">
-                <button class="control-button" onclick="saveApiKey()">שמור</button>
-                <button class="control-button" onclick="closePopup('apiKeyPopup')">ביטול</button>
-            </div>
+      <div class="popup-content">
+        <h2>הגדר API Key</h2>
+        <input type="text" id="apiKeyInput" placeholder="הזן API Key" />
+        <br />
+        <br />
+        <div class="popup-footer">
+          <button class="control-button" onclick="saveApiKey()">שמור</button>
+          <button class="control-button" onclick="closePopup('apiKeyPopup')">
+            ביטול
+          </button>
         </div>
+      </div>
     </div>
 
     <div id="audioInputPopup" class="popup">
-        <div class="popup-content">
-            <h2>בחר מקור אודיו</h2>
-            <div class="tab-buttons">
-                <button class="tab-button" onclick="showAudioTab('file')">העלאת קובץ</button>
-                <button class="tab-button" onclick="showAudioTab('record')">הקלטה</button>
-            </div>
-            <div id="fileInputTab" class="tab-content" style="display: none;">
-                <input type="file" id="audioFile" accept="audio/*" onchange="handleFileSelect(event)">
-            </div>
-            <div id="recordInputTab" class="tab-content" style="display: none;">
-                <button id="recordButton" class="control-button" onclick="toggleRecording()">
-                    <i class="fas fa-microphone"></i> התחל הקלטה
-                </button>
-                <div id="recordingStatus" style="display: none;">
-                    <p>יש הקלטה בזיכרון</p>
-                    <button class="control-button" onclick="deleteRecording()">מחק הקלטה</button>
-                </div>
-            </div>
-            <div class="popup-footer">
-                <button class="control-button" onclick="confirmAudioInput()">אישור</button>
-                <button class="control-button" onclick="closePopup('audioInputPopup')">ביטול</button>
-            </div>
+      <div class="popup-content">
+        <h2>בחר מקור אודיו</h2>
+        <div class="tab-buttons">
+          <button class="tab-button" onclick="showAudioTab('file')">
+            העלאת קובץ
+          </button>
+          <button class="tab-button" onclick="showAudioTab('record')">
+            הקלטה
+          </button>
         </div>
+        <div id="fileInputTab" class="tab-content" style="display: none">
+          <input
+            type="file"
+            id="audioFile"
+            accept="audio/*"
+            onchange="handleFileSelect(event)"
+          />
+        </div>
+        <div id="recordInputTab" class="tab-content" style="display: none">
+          <button
+            id="recordButton"
+            class="control-button"
+            onclick="toggleRecording()"
+          >
+            <i class="fas fa-microphone"></i> התחל הקלטה
+          </button>
+          <div id="recordingStatus" style="display: none">
+            <p>יש הקלטה בזיכרון</p>
+            <button class="control-button" onclick="deleteRecording()">
+              מחק הקלטה
+            </button>
+          </div>
+        </div>
+        <div class="popup-footer">
+          <button class="control-button" onclick="confirmAudioInput()">
+            אישור
+          </button>
+          <button
+            class="control-button"
+            onclick="closePopup('audioInputPopup')"
+          >
+            ביטול
+          </button>
+        </div>
+      </div>
     </div>
 
     <div id="settingsPopup" class="popup">
-        <div class="popup-content">
-            <h2>הגדרות</h2>
-            <label for="wordsPerSubtitle">מילים בכל כתובית:</label>
-            <select id="wordsPerSubtitle">
-                <option value="4">4</option>
-                <option value="6">6</option>
-                <option value="8" selected>8</option>
-                <option value="10">10</option>
-                <option value="12">12</option>
-            </select>
-            <div class="popup-footer">
-                <button class="control-button" onclick="saveSettings()">שמור</button>
-                <button class="control-button" onclick="closePopup('settingsPopup')">ביטול</button>
-            </div>
+      <div class="popup-content">
+        <h2>הגדרות</h2>
+        <label for="wordsPerSubtitle">מילים בכל כתובית:</label>
+        <select id="wordsPerSubtitle">
+          <option value="4">4</option>
+          <option value="6">6</option>
+          <option value="8" selected>8</option>
+          <option value="10">10</option>
+          <option value="12">12</option>
+        </select>
+        <div class="popup-footer">
+          <button class="control-button" onclick="saveSettings()">שמור</button>
+          <button class="control-button" onclick="closePopup('settingsPopup')">
+            ביטול
+          </button>
         </div>
+      </div>
     </div>
 
     <div id="helpPopup" class="popup">
-        <div class="popup-content">
-            <h2>עזרה</h2>
-            <h3>איך להוציא מפתח API:</h3>
-            <ol>
-                <li>היכנסו לאתר <a href="https://console.groq.com" target="_blank">console.groq.com</a></li>
-                <li>הירשמו או התחברו לחשבון</li>
-                <li>לחצו על "Create API Key"</li>
-                <li>העתיקו את המפתח שנוצר</li>
-            </ol>
-            <h3>איך להשתמש באתר:</h3>
-            <ol>
-                <li>הזינו את מפתח ה-API</li>
-                <li>בחרו קובץ אודיו או הקליטו ישירות באתר</li>
-                <li>לחצו על "התחל תמלול"</li>
-                <li>המתינו לתוצאות ובחרו בין פורמט SRT לטקסט רגיל</li>
-            </ol>
-            <button class="control-button" onclick="closePopup('helpPopup')">סגור</button>
-        </div>
+      <div class="popup-content">
+        <h2>עזרה</h2>
+        <h3>איך להוציא מפתח API:</h3>
+        <ol>
+          <li>
+            היכנסו לאתר
+            <a href="https://console.groq.com" target="_blank"
+              >console.groq.com</a
+            >
+          </li>
+          <li>הירשמו או התחברו לחשבון</li>
+          <li>לחצו על "Create API Key"</li>
+          <li>העתיקו את המפתח שנוצר</li>
+        </ol>
+        <h3>איך להשתמש באתר:</h3>
+        <ol>
+          <li>הזינו את מפתח ה-API</li>
+          <li>בחרו קובץ אודיו או הקליטו ישירות באתר</li>
+          <li>לחצו על "התחל תמלול"</li>
+          <li>התינו לתוצאות בחרו בין פורמט SRT לטקסט רגיל</li>
+        </ol>
+        <button class="control-button" onclick="closePopup('helpPopup')">
+          סגור
+        </button>
+      </div>
     </div>
 
     <div id="summaryPopup" class="popup">
-        <div class="popup-content">
-            <h2>סיכום התמלול</h2>
-            <div id="summaryContent"></div>
-            <button class="control-button" onclick="closePopup('summaryPopup')">סגור</button>
+      <div class="popup-content">
+        <h2>סיכום התמלול</h2>
+        <div id="summaryContent"></div>
+        <div class="popup-footer">
+          <button class="control-button" onclick="downloadSummary()">
+            <i class="fas fa-download"></i> הורד סיכום
+          </button>
+          <button class="control-button" onclick="closePopup('summaryPopup')">
+            סגור
+          </button>
         </div>
+      </div>
     </div>
 
     <button class="help-button" onclick="showPopup('helpPopup')">?</button>
 
     <div class="credit">
-        <p>פותח על ידי שחר גולן | <a href="https://www.youtube.com/@sgolan20" target="_blank">ערוץ היוטיוב</a></p>
+      <p>
+        פותח על ידי שחר גולן |
+        <a href="https://www.youtube.com/@sgolan20" target="_blank"
+          >ערוץ יוטיוב</a
+        >
+      </p>
     </div>
-
     <script>
-        let transcriptionResult;
-        let apiKey;
-        let audioBlob;
-        let mediaRecorder;
-        let isRecording = false;
-        let audioSource = null; // 'file' או 'record'
+      let transcriptionResult;
+      let apiKey;
+      let audioBlob;
+      let mediaRecorder;
+      let isRecording = false;
+      let audioSource = null; // 'file' או 'record'
 
-        let originalApiKey = '';
-        let originalAudioFile = null;
-        let originalAudioBlob = null;
-        let originalWordsPerSubtitle = '8';
+      let originalApiKey = "";
+      let originalAudioFile = null;
+      let originalAudioBlob = null;
+      let originalWordsPerSubtitle = "8";
 
-        let selectedFile = null;
+      let selectedFile = null;
 
-        function showPopup(popupId) {
-            document.getElementById(popupId).style.display = 'flex';
-            if (popupId === 'apiKeyPopup') {
-                originalApiKey = document.getElementById('apiKeyInput').value;
-            } else if (popupId === 'audioInputPopup') {
-                // איפוס הבחירה הקודמת
-                document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-                document.querySelectorAll('.tab-content').forEach(content => content.style.display = 'none');
-                audioSource = null;
-                selectedFile = null;
-                audioBlob = null;
-                updateRecordingStatus();
-            } else if (popupId === 'settingsPopup') {
-                originalWordsPerSubtitle = document.getElementById('wordsPerSubtitle').value;
-            }
+      // הוספת משתנים גלובליים חדשים
+      let isTranscribing = false;
+      let currentChunkIndex = 0;
+
+      // הוספת משתנה גלובלי חדש לעקוב אחרי הזמן המצטבר
+      let accumulatedDuration = 0;
+
+      function showPopup(popupId) {
+        document.getElementById(popupId).style.display = "flex";
+        if (popupId === "apiKeyPopup") {
+          originalApiKey = document.getElementById("apiKeyInput").value;
+        } else if (popupId === "audioInputPopup") {
+          // איפוס הבחירה הקודמת
+          document
+            .querySelectorAll(".tab-button")
+            .forEach((btn) => btn.classList.remove("active"));
+          document
+            .querySelectorAll(".tab-content")
+            .forEach((content) => (content.style.display = "none"));
+          audioSource = null;
+          selectedFile = null;
+          audioBlob = null;
+          updateRecordingStatus();
+        } else if (popupId === "settingsPopup") {
+          originalWordsPerSubtitle =
+            document.getElementById("wordsPerSubtitle").value;
         }
+      }
 
-        function closePopup(popupId) {
-            // ביטול השינויים
-            if (popupId === 'apiKeyPopup') {
-                document.getElementById('apiKeyInput').value = originalApiKey;
-            } else if (popupId === 'audioInputPopup') {
-                document.getElementById('audioFile').value = '';
-                if (originalAudioFile) {
-                    const dataTransfer = new DataTransfer();
-                    dataTransfer.items.add(originalAudioFile);
-                    document.getElementById('audioFile').files = dataTransfer.files;
-                }
-                audioBlob = originalAudioBlob;
-                updateRecordingStatus();
-            } else if (popupId === 'settingsPopup') {
-                document.getElementById('wordsPerSubtitle').value = originalWordsPerSubtitle;
-            }
-            document.getElementById(popupId).style.display = 'none';
+      function closePopup(popupId) {
+        // ביטול השיניים
+        if (popupId === "apiKeyPopup") {
+          document.getElementById("apiKeyInput").value = originalApiKey;
+        } else if (popupId === "audioInputPopup") {
+          document.getElementById("audioFile").value = "";
+          if (originalAudioFile) {
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(originalAudioFile);
+            document.getElementById("audioFile").files = dataTransfer.files;
+          }
+          audioBlob = originalAudioBlob;
+          updateRecordingStatus();
+        } else if (popupId === "settingsPopup") {
+          document.getElementById("wordsPerSubtitle").value =
+            originalWordsPerSubtitle;
         }
+        document.getElementById(popupId).style.display = "none";
+      }
 
-        function saveApiKey() {
-            const inputApiKey = document.getElementById('apiKeyInput').value.trim();
-            if (inputApiKey) {
-                localStorage.setItem('groqApiKey', inputApiKey);
-                apiKey = inputApiKey;
-                showMessage('ה-API Key נשמר בהצלחה!');
-                document.getElementById('apiKeyPopup').style.display = 'none';
-            } else {
-                showMessage('אנא הזן API Key תקין');
-            }
+      function saveApiKey() {
+        const inputApiKey = document.getElementById("apiKeyInput").value.trim();
+        if (inputApiKey) {
+          localStorage.setItem("groqApiKey", inputApiKey);
+          apiKey = inputApiKey;
+          showMessage("ה-API Key נשמר בהצלחה!");
+          document.getElementById("apiKeyPopup").style.display = "none";
+        } else {
+          showMessage("אנא הזן API Key תקין");
         }
+      }
 
-        function showAudioTab(tabName) {
-            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(content => content.style.display = 'none');
-            
-            document.querySelector(`.tab-button[onclick="showAudioTab('${tabName}')"]`).classList.add('active');
-            document.getElementById(`${tabName}InputTab`).style.display = 'block';
-            
-            audioSource = tabName;
-            if (tabName === 'file') {
-                selectedFile = null;
-                document.getElementById('audioFile').value = '';
-            } else {
-                audioBlob = null;
-            }
-            updateRecordingStatus();
+      function showAudioTab(tabName) {
+        document
+          .querySelectorAll(".tab-button")
+          .forEach((btn) => btn.classList.remove("active"));
+        document
+          .querySelectorAll(".tab-content")
+          .forEach((content) => (content.style.display = "none"));
+
+        document
+          .querySelector(`.tab-button[onclick="showAudioTab('${tabName}')"]`)
+          .classList.add("active");
+        document.getElementById(`${tabName}InputTab`).style.display = "block";
+
+        audioSource = tabName;
+        if (tabName === "file") {
+          selectedFile = null;
+          document.getElementById("audioFile").value = "";
+        } else {
+          audioBlob = null;
         }
+        updateRecordingStatus();
+      }
 
-        function handleFileSelect(event) {
-            selectedFile = event.target.files[0];
-            if (selectedFile) {
-                showMessage(`נבחר קובץ: ${selectedFile.name}`);
-            }
+      function handleFileSelect(event) {
+        selectedFile = event.target.files[0];
+        if (selectedFile) {
+          showMessage(`נבחר קובץ: ${selectedFile.name}`);
         }
+      }
 
-        function confirmAudioInput() {
-            if (audioSource === 'file') {
-                if (!selectedFile) {
-                    showMessage('אנא בחר קובץ אודיו');
-                    return;
-                }
-                showMessage(`נבחר קובץ: ${selectedFile.name}`);
-            } else if (audioSource === 'record') {
-                if (!audioBlob) {
-                    showMessage('אנא הקלט אודיו תחילה');
-                    return;
-                }
-                showMessage('הקלטה נשמרה');
-            }
-            document.getElementById('audioInputPopup').style.display = 'none';
+      function confirmAudioInput() {
+        if (audioSource === "file") {
+          if (!selectedFile) {
+            showMessage("א א בחר קובץ אודיו");
+            return;
+          }
+          showMessage(`נבחר קובץ: ${selectedFile.name}`);
+        } else if (audioSource === "record") {
+          if (!audioBlob) {
+            showMessage("אנא הקלט אודיו תחילה");
+            return;
+          }
+          showMessage("הקלטה נשמרה");
         }
+        document.getElementById("audioInputPopup").style.display = "none";
+      }
 
-        function saveSettings() {
-            // שמירת ההגדרות
-            originalWordsPerSubtitle = document.getElementById('wordsPerSubtitle').value;
-            document.getElementById('settingsPopup').style.display = 'none';
+      function saveSettings() {
+        // שמירת ההגדרות
+        originalWordsPerSubtitle =
+          document.getElementById("wordsPerSubtitle").value;
+        document.getElementById("settingsPopup").style.display = "none";
+      }
+
+      function updateRecordingStatus() {
+        const recordingStatus = document.getElementById("recordingStatus");
+        const recordButton = document.getElementById("recordButton");
+        if (audioBlob) {
+          recordingStatus.style.display = "block";
+          recordButton.innerHTML =
+            '<i class="fas fa-microphone"></i> הקלט מחדש';
+        } else {
+          recordingStatus.style.display = "none";
+          recordButton.innerHTML =
+            '<i class="fas fa-microphone"></i> התחל הקלטה';
         }
+      }
 
-        function updateRecordingStatus() {
-            const recordingStatus = document.getElementById('recordingStatus');
-            const recordButton = document.getElementById('recordButton');
-            if (audioBlob) {
-                recordingStatus.style.display = 'block';
-                recordButton.innerHTML = '<i class="fas fa-microphone"></i> הקלט מחדש';
-            } else {
-                recordingStatus.style.display = 'none';
-                recordButton.innerHTML = '<i class="fas fa-microphone"></i> התחל הקלטה';
-            }
-        }
+      function deleteRecording() {
+        audioBlob = null;
+        updateRecordingStatus();
+      }
 
-        function deleteRecording() {
-            audioBlob = null;
-            updateRecordingStatus();
-        }
-
-        async function toggleRecording() {
-            if (!isRecording) {
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    mediaRecorder = new MediaRecorder(stream);
-                    const chunks = [];
-
-                    mediaRecorder.ondataavailable = (event) => {
-                        chunks.push(event.data);
-                    };
-
-                    mediaRecorder.onstop = () => {
-                        audioBlob = new Blob(chunks, { type: 'audio/wav' });
-                        updateRecordingStatus();
-                    };
-
-                    mediaRecorder.start();
-                    isRecording = true;
-                    document.getElementById('recordButton').innerHTML = '<i class="fas fa-stop"></i> עצור הקלטה';
-                } catch (error) {
-                    console.error('שגיאה בהקלטה:', error);
-                    showMessage('לא ניתן להתחיל הקלטה. אנא ודא שיש לך מיקרופון זמין.');
-                }
-            } else {
-                mediaRecorder.stop();
-                isRecording = false;
-                document.getElementById('recordButton').innerHTML = '<i class="fas fa-microphone"></i> הקלט מחדש';
-            }
-        }
-
-        async function loadApiKey() {
-            try {
-                apiKey = localStorage.getItem('groqApiKey');
-                if (apiKey) {
-                    document.getElementById('apiKeyInput').value = apiKey;
-                }
-            } catch (error) {
-                console.error('שגיאה בטעינת API Key:', error);
-                apiKey = null;
-            }
-        }
-
-        async function transcribe() {
-            if (!apiKey) {
-                showMessage('אנא הגדר API Key תחילה');
-                showPopup('apiKeyPopup');
-                return;
-            }
-
-            let audioFile;
-            if (audioSource === 'file') {
-                audioFile = selectedFile;
-                if (!audioFile) {
-                    showMessage('אנא בחר קובץ אודיו');
-                    return;
-                }
-            } else if (audioSource === 'record') {
-                if (!audioBlob) {
-                    showMessage('אנא הקלט אודיו תחילה');
-                    return;
-                }
-                audioFile = new File([audioBlob], 'recorded_audio.wav', { type: 'audio/wav' });
-            } else {
-                showMessage('אנא בחר מקור אודיו (קובץ או הקלטה)');
-                return;
-            }
-
-            showMessage('מתחיל תמלול...', 0);
-            document.getElementById('loader').style.display = 'block';
-            document.getElementById('transcribeButton').disabled = true;
-
-            try {
-                if (audioFile.size > 25 * 1024 * 1024) {
-                    const audioChunks = await splitAudioFile(audioFile);
-                    transcriptionResult = { segments: [] };
-                    for (let i = 0; i < audioChunks.length; i++) {
-                        showMessage(`מתמלל חלק ${i + 1} מתוך ${audioChunks.length}...`, 0);
-                        const chunkResult = await transcribeChunk(audioChunks[i]);
-                        transcriptionResult.segments = transcriptionResult.segments.concat(chunkResult.segments);
-                    }
-                } else {
-                    transcriptionResult = await transcribeChunk(audioFile);
-                }
-                updateTranscription();
-                showTab('srt');
-                showMessage('התמלול הושלם בהצלחה!');
-            } catch (error) {
-                console.error('שגיאה בתמלול:', error);
-                showMessage('אירעה שגיאה בתמלול. אנא בדוק את ה-API Key שלך ונסה שוב.');
-                localStorage.removeItem('groqApiKey');
-                apiKey = null;
-            } finally {
-                document.getElementById('loader').style.display = 'none';
-                document.getElementById('transcribeButton').disabled = false;
-            }
-        }
-
-        async function transcribeChunk(chunk) {
-            const formData = new FormData();
-            formData.append('file', chunk);
-            formData.append('model', 'whisper-large-v3');
-            formData.append('response_format', 'verbose_json');
-
-            const response = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${apiKey}`
-                },
-                body: formData
+      async function toggleRecording() {
+        if (!isRecording) {
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+              audio: true,
             });
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
-            }
-
-            return await response.json();
-        }
-
-        async function splitAudioFile(file) {
-            const chunkSize = 24 * 1024 * 1024;
-            const chunks = Math.ceil(file.size / chunkSize);
-            const audioChunks = [];
-
-            for (let i = 0; i < chunks; i++) {
-                const start = i * chunkSize;
-                const end = Math.min((i + 1) * chunkSize, file.size);
-                const chunk = file.slice(start, end);
-                audioChunks.push(new File([chunk], `chunk_${i + 1}.${file.name.split('.').pop()}`, { type: file.type }));
-            }
-
-            return audioChunks;
-        }
-
-        function updateTranscription() {
-            if (!transcriptionResult) {
-                console.log('אין תוצאות תמלול זמינות');
-                return;
-            }
-
-            const wordsPerSubtitle = parseInt(document.getElementById('wordsPerSubtitle').value);
-            
-            if (transcriptionResult.segments && transcriptionResult.segments.length > 0) {
-                let srtFormat = '';
-                let plainText = '';
-                let subtitleIndex = 1;
-                transcriptionResult.segments.forEach((segment) => {
-                    const subtitles = splitIntoSubtitles(segment.text, segment.start, segment.end, wordsPerSubtitle);
-                    subtitles.forEach((subtitle) => {
-                        srtFormat += `${subtitleIndex}\n`;
-                        srtFormat += `${formatTime(subtitle.start)} --> ${formatTime(subtitle.end)}\n`;
-                        srtFormat += `${subtitle.text}\n\n`;
-                        plainText += subtitle.text + ' ';
-                        subtitleIndex++;
-                    });
-                });
-                document.getElementById('srtTranscription').innerHTML = `<pre>${srtFormat}</pre>`;
-                document.getElementById('plainTextTranscription').textContent = plainText.trim();
-                
-                // הצגת התוכן
-                document.getElementById('srtContent').style.display = 'block';
-                document.getElementById('plainTextContent').style.display = 'none';
-                showTab('srt'); // מציג את הטאב של ה-SRT כברירת מחדל
-            } else {
-                document.getElementById('srtTranscription').innerHTML = '<p>לא התקבל תמלול או שהתמלול ריק</p>';
-                document.getElementById('plainTextTranscription').textContent = 'לא התקבל תמלול או שהתמלול ריק';
-            }
-        }
-
-        function formatTime(seconds) {
-            const date = new Date(seconds * 1000);
-            const hours = date.getUTCHours().toString().padStart(2, '0');
-            const minutes = date.getUTCMinutes().toString().padStart(2, '0');
-            const secs = date.getUTCSeconds().toString().padStart(2, '0');
-            const ms = date.getUTCMilliseconds().toString().padStart(3, '0');
-            return `${hours}:${minutes}:${secs},${ms}`;
-        }
-
-        function splitIntoSubtitles(text, startTime, endTime, maxWords) {
-            const words = text.split(' ');
-            const subtitles = [];
-            let currentSubtitle = { text: '', start: startTime };
-            let wordCount = 0;
-
-            words.forEach((word, index) => {
-                currentSubtitle.text += word + ' ';
-                wordCount++;
-
-                if (wordCount === maxWords || index === words.length - 1) {
-                    const progress = (index + 1) / words.length;
-                    currentSubtitle.end = startTime + (endTime - startTime) * progress;
-                    subtitles.push({...currentSubtitle, text: currentSubtitle.text.trim()});
-
-                    if (index < words.length - 1) {
-                        currentSubtitle = { text: '', start: currentSubtitle.end };
-                        wordCount = 0;
-                    }
-                }
-            });
-
-            return subtitles;
-        }
-
-        function showTab(tabName) {
-            document.querySelectorAll('.tab-content').forEach(content => content.style.display = 'none');
-            document.querySelectorAll('.tab-button').forEach(button => button.classList.remove('active'));
-            
-            document.getElementById(`${tabName}Content`).style.display = 'block';
-            document.querySelector(`.tab-button[onclick="showTab('${tabName}')"]`).classList.add('active');
-        }
-
-        function copyToClipboard() {
-            const text = document.querySelector('.tab-content.active').innerText;
-            navigator.clipboard.writeText(text).then(() => {
-                showMessage('הטקסט הועתק ללוח');
-            }, (err) => {
-                console.error('שגיאה בהעתקה: ', err);
-            });
-        }
-
-        function downloadFile() {
-            let content, fileName;
-            if (document.getElementById('srtContent').classList.contains('active')) {
-                content = document.getElementById('srtTranscription').innerText;
-                fileName = 'transcription.srt';
-            } else {
-                content = document.getElementById('plainTextTranscription').innerText;
-                fileName = 'transcription.txt';
-            }
-            
-            const blob = new Blob([content], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = fileName;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }
-
-        function showMessage(message, duration = 3000) {
-            const messageElement = document.createElement('div');
-            messageElement.textContent = message;
-            messageElement.style.position = 'fixed';
-            messageElement.style.top = '20px';
-            messageElement.style.left = '50%';
-            messageElement.style.transform = 'translateX(-50%)';
-            messageElement.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
-            messageElement.style.color = 'white';
-            messageElement.style.padding = '10px 20px';
-            messageElement.style.borderRadius = '5px';
-            messageElement.style.zIndex = '1000';
-            document.body.appendChild(messageElement);
-
-            setTimeout(() => {
-                document.body.removeChild(messageElement);
-            }, duration);
-        }
-
-        async function summarizeTranscription() {
-            if (!transcriptionResult) {
-                showMessage('אין תמלול זמין לסיכום');
-                return;
-            }
-
-            const plainText = document.getElementById('plainTextTranscription').textContent;
-            
-            showMessage('מכין סיכום...', 0);
-            document.getElementById('loader').style.display = 'block';
-
-            try {
-                const chunks = splitTextIntoChunks(plainText, 2000); // חלוקה לחלקים של 2000 תווים
-                let fullSummary = '';
-                
-                for (let i = 0; i < chunks.length; i++) {
-                    showMessage(`מסכם חלק ${i + 1} מתוך ${chunks.length}...`, 0);
-                    const summary = await getSummary(chunks[i]);
-                    fullSummary += summary + ' ';
-                    
-                    if (i < chunks.length - 1) {
-                        await new Promise(resolve => setTimeout(resolve, 10000)); // המתנה של 10 שניות בין בקשות
-                    }
-                }
-                
-                document.getElementById('summaryContent').textContent = fullSummary.trim();
-                showPopup('summaryPopup');
-            } catch (error) {
-                console.error('שגיאה בהכנת הסיכום:', error);
-                showMessage('אירעה שגיאה בהכנת הסיכום. אנא נסה שוב.');
-            } finally {
-                document.getElementById('loader').style.display = 'none';
-            }
-        }
-
-        function splitTextIntoChunks(text, chunkSize) {
+            mediaRecorder = new MediaRecorder(stream);
             const chunks = [];
-            for (let i = 0; i < text.length; i += chunkSize) {
-                chunks.push(text.slice(i, i + chunkSize));
-            }
-            return chunks;
+
+            mediaRecorder.ondataavailable = (event) => {
+              chunks.push(event.data);
+            };
+
+            mediaRecorder.onstop = () => {
+              audioBlob = new Blob(chunks, { type: "audio/wav" });
+              updateRecordingStatus();
+            };
+
+            mediaRecorder.start();
+            isRecording = true;
+            document.getElementById("recordButton").innerHTML =
+              '<i class="fas fa-stop"></i> עצור הקלטה';
+          } catch (error) {
+            console.error("שגיאה בהקלטה:", error);
+            showMessage("לא ניתן להתחיל הקלטה. אנא ודא שיש לך מיקרופון זמ.");
+          }
+        } else {
+          mediaRecorder.stop();
+          isRecording = false;
+          document.getElementById("recordButton").innerHTML =
+            '<i class="fas fa-microphone"></i> הקלט מחדש';
+        }
+      }
+
+      async function loadApiKey() {
+        try {
+          apiKey = localStorage.getItem("groqApiKey");
+          if (apiKey) {
+            document.getElementById("apiKeyInput").value = apiKey;
+          }
+        } catch (error) {
+          console.error("שגיאה בטעינת API Key:", error);
+          apiKey = null;
+        }
+      }
+
+      async function transcribe() {
+        if (!apiKey) {
+          showMessage("אנא הגדר API Key תחילה");
+          showPopup("apiKeyPopup");
+          return;
         }
 
-        async function getSummary(text) {
-            const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${apiKey}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    model: "llama3-70b-8192",
-                    messages: [
-                        {role: "system", content: "אתה עוזר מועיל שמסכם טקסטים בצורה תמציתית וברורה."},
-                        {role: "user", content: `צור סיכום קצר של הטקסט הבא:\n\n${text}`}
-                    ],
-                    max_tokens: 300
-                })
+        // איפוס הזמן המצטבר בתחילת תמלול חדש
+        accumulatedDuration = 0;
+
+        let audioFile;
+        if (audioSource === "file") {
+          audioFile = selectedFile;
+          if (!audioFile) {
+            showMessage("אנא בחר קובץ אודיו");
+            return;
+          }
+        } else if (audioSource === "record") {
+          if (!audioBlob) {
+            showMessage("א א הקלט אודיו תחילה");
+            return;
+          }
+          audioFile = new File([audioBlob], "recorded_audio.wav", {
+            type: "audio/wav",
+          });
+        } else {
+          showMessage("אנא בחר מקור אודיו (קובץ או הקלטה)");
+          return;
+        }
+
+        showMessage("מתחיל תמלול...", 0);
+        document.getElementById("loader").style.display = "block";
+        document.getElementById("progressContainer").style.display = "block";
+        document.getElementById("transcribeButton").disabled = true;
+
+        try {
+          // בדיקת תקינות הקובץ
+          validateAudioFile(audioFile);
+
+          const CHUNK_SIZE = 25 * 1024 * 1024;
+          const chunks = await splitAudioFile(audioFile, CHUNK_SIZE);
+          const totalChunks = chunks.length;
+
+          transcriptionResult = { segments: [] };
+
+          for (let i = 0; i < chunks.length; i++) {
+            const chunkNumber = i + 1;
+            showMessage(`מתמלל חלק ${chunkNumber} מתוך ${totalChunks}...`, 0);
+
+            try {
+              const chunkResult = await transcribeChunk(
+                chunks[i],
+                chunkNumber,
+                totalChunks
+              );
+
+              if (chunkResult && chunkResult.segments) {
+                transcriptionResult.segments =
+                  transcriptionResult.segments.concat(chunkResult.segments);
+                transcriptionResult.segments.sort((a, b) => a.start - b.start);
+                updateTranscription(true, chunkNumber, totalChunks);
+              }
+            } catch (error) {
+              console.error(`שגיאה בתמלול חלק ${chunkNumber}:`, error);
+
+              // יצירת פופאפ עם אפשרויות
+              const shouldDownload = await showErrorDialog(
+                `אירעה שגיאה בתמלול חלק ${chunkNumber} מתוך ${totalChunks}. 
+                            האם ברצונך להוריד את שאר חלקי האודיו שטרם תומללו?`
+              );
+
+              if (shouldDownload) {
+                downloadRemainingChunks(
+                  audioFile,
+                  i * CHUNK_SIZE,
+                  totalChunks,
+                  i
+                );
+              }
+              throw error; // לפסיק את התהליך
+            }
+          }
+
+          // עדכון הודעת הסיום
+          const progressInfo = document.querySelector(
+            ".transcription-progress-info"
+          );
+          if (progressInfo) {
+            progressInfo.innerHTML = "✅ התמלול הושלם בהצלחה";
+            progressInfo.style.backgroundColor = "#d4edda"; // צבע רקע ירוק בהיר
+            progressInfo.style.color = "#155724"; // צבע טקסט ירוק כהה
+
+            // הסרת ההודעה אחרי 5 שניות
+            setTimeout(() => {
+              progressInfo.remove();
+            }, 5000);
+          }
+
+          showTab("srt");
+          showMessage("התמלול הושלם בהצלחה!");
+        } catch (error) {
+          console.error("שגיאה בתמלול:", error);
+          showMessage(
+            error.message ||
+              "אירעה שגיאה בתמלול. אנא בדוק את ה-API Key שלך ונסה שוב."
+          );
+          if (error.message.includes("API Key")) {
+            localStorage.removeItem("groqApiKey");
+            apiKey = null;
+          }
+        } finally {
+          document.getElementById("loader").style.display = "none";
+          document.getElementById("progressContainer").style.display = "none";
+          document.getElementById("transcribeButton").disabled = false;
+          updateProgress(0);
+        }
+      }
+
+      function updateProgress(percent, chunkInfo = "") {
+        const progressFill = document.getElementById("progressFill");
+        const progressText = document.getElementById("progressText");
+
+        progressFill.style.width = `${percent}%`;
+        progressText.innerHTML = chunkInfo || `${Math.round(percent)}%`;
+      }
+
+      async function transcribeChunk(chunk, chunkNumber, totalChunks) {
+        const formData = new FormData();
+        formData.append("file", chunk);
+        formData.append("model", "whisper-large-v3");
+        formData.append("response_format", "verbose_json");
+        formData.append("language", "he"); // הוספת שפה
+        formData.append("temperature", "0"); // הוספת טמפרטורה
+
+        return new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+
+          xhr.upload.onprogress = (event) => {
+            if (event.lengthComputable) {
+              const chunkProgress = (event.loaded / event.total) * 100;
+              const previousChunksProgress =
+                ((chunkNumber - 1) / totalChunks) * 100;
+              const currentChunkContribution = chunkProgress / totalChunks;
+              const totalProgress =
+                previousChunksProgress + currentChunkContribution;
+
+              const progressInfo = `
+                            חלק ${chunkNumber} מתוך ${totalChunks}<br>
+                            התקדמות בחלק הנוכחי: ${Math.round(
+                              chunkProgress
+                            )}%<br>
+                            התקדמות כללית: ${Math.round(totalProgress)}%
+                        `;
+
+              updateProgress(totalProgress, progressInfo);
+            }
+          };
+
+          xhr.onload = async () => {
+            if (xhr.status === 200) {
+              const response = JSON.parse(xhr.responseText);
+
+              // עדכון הזמנים של הסגמנטים בחלק הנוכחי
+              if (response.segments) {
+                response.segments = response.segments.map((segment) => ({
+                  ...segment,
+                  start: segment.start + accumulatedDuration,
+                  end: segment.end + accumulatedDuration,
+                }));
+
+                // עדכון הזמן המצטבר לחלק הבא
+                if (response.segments.length > 0) {
+                  const lastSegment =
+                    response.segments[response.segments.length - 1];
+                  accumulatedDuration = lastSegment.end;
+                }
+              }
+
+              resolve(response);
+            } else {
+              // טיפול מפורט יותר בשגיאות
+              let errorMessage = "שגיאת שרת לא ידועה";
+              try {
+                const errorResponse = JSON.parse(xhr.responseText);
+                errorMessage =
+                  errorResponse.error?.message ||
+                  errorResponse.message ||
+                  errorMessage;
+              } catch (e) {
+                errorMessage = xhr.responseText || errorMessage;
+              }
+              console.error("Server Error:", {
+                status: xhr.status,
+                message: errorMessage,
+                response: xhr.responseText,
+              });
+              reject(new Error(`שגיאת שרת (${xhr.status}): ${errorMessage}`));
+            }
+          };
+
+          xhr.onerror = () => {
+            reject(new Error("שגיאת רשת - אנא בדוק את החיבור לאינטרנט"));
+          };
+
+          xhr.ontimeout = () => {
+            reject(new Error("פסק זמן - הבקשה ארכה זמן רב מדי"));
+          };
+
+          xhr.open(
+            "POST",
+            "https://api.groq.com/openai/v1/audio/transcriptions"
+          );
+          xhr.setRequestHeader("Authorization", `Bearer ${apiKey}`);
+          // הגדרת טיימאאוט ארוך יותר
+          xhr.timeout = 300000; // 5 דקות
+
+          try {
+            xhr.send(formData);
+          } catch (error) {
+            reject(new Error(`שגיאה בשליחת הקובץ: ${error.message}`));
+          }
+        });
+      }
+
+      async function splitAudioFile(file, chunkSize) {
+        const chunks = [];
+        for (let start = 0; start < file.size; start += chunkSize) {
+          const chunk = file.slice(
+            start,
+            Math.min(start + chunkSize, file.size)
+          );
+          chunks.push(
+            new File(
+              [chunk],
+              `chunk_${chunks.length + 1}.${file.name.split(".").pop()}`,
+              { type: file.type }
+            )
+          );
+        }
+        return chunks;
+      }
+
+      function updateTranscription(
+        isPartial = false,
+        currentChunk = null,
+        totalChunks = null
+      ) {
+        if (!transcriptionResult) {
+          console.log("אין תוצאות תמלול זמינות");
+          return;
+        }
+
+        // הוספת קלאס להצגת הקארד של התמלול
+        const transcriptionCard = document.querySelector(
+          ".card:has(.tab-buttons)"
+        );
+        transcriptionCard.classList.add("transcription-card");
+        transcriptionCard.classList.add("has-content");
+
+        const wordsPerSubtitle = parseInt(
+          document.getElementById("wordsPerSubtitle").value
+        );
+
+        if (
+          transcriptionResult.segments &&
+          transcriptionResult.segments.length > 0
+        ) {
+          let srtFormat = "";
+          let plainText = "";
+          let subtitleIndex = 1;
+
+          transcriptionResult.segments.forEach((segment) => {
+            const subtitles = splitIntoSubtitles(
+              segment.text,
+              segment.start,
+              segment.end,
+              wordsPerSubtitle
+            );
+            subtitles.forEach((subtitle) => {
+              srtFormat += `${subtitleIndex}\n`;
+              srtFormat += `${formatTime(subtitle.start)} --> ${formatTime(
+                subtitle.end
+              )}\n`;
+              srtFormat += `${subtitle.text}\n\n`;
+              plainText += subtitle.text + " ";
+              subtitleIndex++;
+            });
+          });
+
+          document.getElementById(
+            "srtTranscription"
+          ).innerHTML = `<pre>${srtFormat}</pre>`;
+          document.getElementById("plainTextTranscription").textContent =
+            plainText.trim();
+
+          // עדכון או יצירה של אינדיקטור התקדמות
+          if (isPartial && currentChunk) {
+            let progressInfo = document.querySelector(
+              ".transcription-progress-info"
+            );
+            if (!progressInfo) {
+              progressInfo = document.createElement("div");
+              progressInfo.className = "transcription-progress-info";
+              progressInfo.style.textAlign = "center";
+              progressInfo.style.padding = "10px";
+              progressInfo.style.backgroundColor = "#fff3cd";
+              progressInfo.style.marginBottom = "10px";
+              const srtContainer = document.getElementById("srtContent");
+              srtContainer.insertBefore(progressInfo, srtContainer.firstChild);
+            }
+            progressInfo.innerHTML = `⚠️ תמלול בתהליך: חלק ${currentChunk} מתוך ${totalChunks}`;
+          }
+
+          // הצגת התוכן
+          document.getElementById("srtContent").style.display = "block";
+          document.getElementById("plainTextContent").style.display = "none";
+
+          if (isPartial) {
+            const srtElement = document.getElementById("srtTranscription");
+            srtElement.scrollTop = srtElement.scrollHeight;
+          }
+
+          // הפעלת כפתור ההורדה
+          const downloadButton = document.querySelector(
+            '.control-button[onclick="downloadFile()"]'
+          );
+          if (downloadButton) {
+            downloadButton.disabled = false;
+            downloadButton.style.opacity = "1";
+          }
+        } else {
+          document.getElementById("srtTranscription").innerHTML =
+            "<p>לא התקבל תמלול או שהתמלול ריק</p>";
+          document.getElementById("plainTextTranscription").textContent =
+            "לא התקבל תמלול או שהתמלול ריק";
+
+          // השבתת כפתור ההורדה
+          const downloadButton = document.querySelector(
+            '.control-button[onclick="downloadFile()"]'
+          );
+          if (downloadButton) {
+            downloadButton.disabled = true;
+            downloadButton.style.opacity = "0.5";
+          }
+        }
+      }
+
+      function formatTime(seconds) {
+        const date = new Date(seconds * 1000);
+        const hours = date.getUTCHours().toString().padStart(2, "0");
+        const minutes = date.getUTCMinutes().toString().padStart(2, "0");
+        const secs = date.getUTCSeconds().toString().padStart(2, "0");
+        const ms = date.getUTCMilliseconds().toString().padStart(3, "0");
+        return `${hours}:${minutes}:${secs},${ms}`;
+      }
+
+      function splitIntoSubtitles(text, startTime, endTime, maxWords) {
+        const words = text.split(" ");
+        const subtitles = [];
+        let currentSubtitle = { text: "", start: startTime };
+        let wordCount = 0;
+
+        words.forEach((word, index) => {
+          currentSubtitle.text += word + " ";
+          wordCount++;
+
+          if (wordCount === maxWords || index === words.length - 1) {
+            const progress = (index + 1) / words.length;
+            currentSubtitle.end = startTime + (endTime - startTime) * progress;
+            subtitles.push({
+              ...currentSubtitle,
+              text: currentSubtitle.text.trim(),
             });
 
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+            if (index < words.length - 1) {
+              currentSubtitle = { text: "", start: currentSubtitle.end };
+              wordCount = 0;
             }
+          }
+        });
 
-            const result = await response.json();
-            return result.choices[0].message.content;
+        return subtitles;
+      }
+
+      function showTab(tabName) {
+        document
+          .querySelectorAll(".tab-content")
+          .forEach((content) => (content.style.display = "none"));
+        document
+          .querySelectorAll(".tab-button")
+          .forEach((button) => button.classList.remove("active"));
+
+        document.getElementById(`${tabName}Content`).style.display = "block";
+        document
+          .querySelector(`.tab-button[onclick="showTab('${tabName}')"]`)
+          .classList.add("active");
+      }
+
+      function copyToClipboard() {
+        const text = document.querySelector(".tab-content.active").innerText;
+        navigator.clipboard.writeText(text).then(
+          () => {
+            showMessage("הטקסט הועתק ללוח");
+          },
+          (err) => {
+            console.error("שגיאה בהעתקה: ", err);
+          }
+        );
+      }
+
+      function downloadFile() {
+        // בדיקה אם יש תמלול
+        if (
+          !transcriptionResult ||
+          !transcriptionResult.segments ||
+          transcriptionResult.segments.length === 0
+        ) {
+          showMessage("אין תמלול זמין להורדה");
+          return;
         }
 
-        // קריאה לפונקציות אתחול
+        const downloadPopup = document.createElement("div");
+        downloadPopup.className = "popup";
+        downloadPopup.style.display = "flex";
+
+        const defaultFileName = selectedFile
+          ? selectedFile.name.split(".")[0]
+          : "transcription";
+
+        // בדיקה האם התמלול חלקי
+        const isPartial =
+          document.querySelector(".transcription-progress-info") !== null;
+
+        let warningMessage = "";
+        if (isPartial) {
+          warningMessage = `
+            <div style="background-color: #fff3cd; padding: 10px; margin-bottom: 15px; border-radius: 5px;">
+              <strong>⚠️ שים לב:</strong> התמלול טרם הושלם. הקובץ שיורד יכיל רק את החלק שכבר תומלל.
+            </div>
+          `;
+        }
+
+        downloadPopup.innerHTML = `
+          <div class="popup-content">
+            <h3>הורדת קובץ</h3>
+            ${warningMessage}
+            <div style="margin-bottom: 15px;">
+              <label for="fileName">שם הקובץ:</label>
+              <input type="text" id="fileName" value="${defaultFileName}" style="width: 100%; margin-top: 5px; padding: 5px;">
+            </div>
+            <div class="popup-footer">
+              <button class="control-button" id="downloadSrt">
+                <i class="fas fa-download"></i> הורד כ-SRT
+              </button>
+              <button class="control-button" id="downloadTxt">
+                <i class="fas fa-download"></i> הורד כטקסט
+              </button>
+              <button class="control-button" id="cancelDownload">ביטול</button>
+            </div>
+          </div>
+        `;
+
+        document.body.appendChild(downloadPopup);
+
+        document.getElementById("downloadSrt").onclick = () => {
+          const fileName =
+            document.getElementById("fileName").value.trim() || defaultFileName;
+          const content = document.getElementById("srtTranscription").innerText;
+          downloadContent(content, `${fileName}.srt`);
+          downloadPopup.remove();
+        };
+
+        document.getElementById("downloadTxt").onclick = () => {
+          const fileName =
+            document.getElementById("fileName").value.trim() || defaultFileName;
+          const content = document.getElementById(
+            "plainTextTranscription"
+          ).innerText;
+          downloadContent(content, `${fileName}.txt`);
+          downloadPopup.remove();
+        };
+
+        document.getElementById("cancelDownload").onclick = () => {
+          downloadPopup.remove();
+        };
+      }
+
+      function downloadContent(content, fileName) {
+        const blob = new Blob([content], { type: "text/plain" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+
+      function showMessage(message, duration = 3000) {
+        const messageElement = document.createElement("div");
+        messageElement.textContent = message;
+        messageElement.style.position = "fixed";
+        messageElement.style.top = "20px";
+        messageElement.style.left = "50%";
+        messageElement.style.transform = "translateX(-50%)";
+        messageElement.style.backgroundColor = "rgba(0, 0, 0, 0.7)";
+        messageElement.style.color = "white";
+        messageElement.style.padding = "10px 20px";
+        messageElement.style.borderRadius = "5px";
+        messageElement.style.zIndex = "1000";
+        document.body.appendChild(messageElement);
+
+        setTimeout(() => {
+          document.body.removeChild(messageElement);
+        }, duration);
+      }
+
+      async function summarizeTranscription() {
+        if (!transcriptionResult) {
+          showMessage("אין תמלול זמין לסיכום");
+          return;
+        }
+
+        const plainText = document.getElementById(
+          "plainTextTranscription"
+        ).textContent;
+
+        showMessage("מכין סיכום...", 0);
+        document.getElementById("loader").style.display = "block";
+
+        try {
+          const chunks = splitTextIntoChunks(plainText, 2000); // חלוקה לחלקים של 2000 תווים
+          let fullSummary = "";
+
+          for (let i = 0; i < chunks.length; i++) {
+            showMessage(`מסם חלק ${i + 1} מתוך ${chunks.length}...`, 0);
+            const summary = await getSummary(chunks[i]);
+            fullSummary += summary + " ";
+          }
+
+          document.getElementById("summaryContent").textContent =
+            fullSummary.trim();
+          showPopup("summaryPopup");
+        } catch (error) {
+          console.error("שגיאה בהכנת הסיכום:", error);
+          showMessage("אירעה שגיאה בהכנת הסיכום. אנא נסה שוב.");
+        } finally {
+          document.getElementById("loader").style.display = "none";
+        }
+      }
+
+      function splitTextIntoChunks(text, chunkSize) {
+        const chunks = [];
+        for (let i = 0; i < text.length; i += chunkSize) {
+          chunks.push(text.slice(i, i + chunkSize));
+        }
+        return chunks;
+      }
+
+      async function getSummary(text) {
+        const response = await fetch(
+          "https://api.groq.com/openai/v1/chat/completions",
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${apiKey}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model: "llama3-70b-8192",
+              messages: [
+                {
+                  role: "system",
+                  content: "אתה עוזר ועיל שמסכם טקסטים בצורה תמציתית וברורה.",
+                },
+                {
+                  role: "user",
+                  content: `צור סיכום קצר של הטקסט הבא:\n\n${text}`,
+                },
+              ],
+              max_tokens: 300,
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(
+            `HTTP error! status: ${response.status}, message: ${errorText}`
+          );
+        }
+
+        const result = await response.json();
+        return result.choices[0].message.content;
+      }
+
+      function toggleTranscription(button) {
+        const container = button.closest(".transcription-container");
+        const isExpanded = container.classList.contains("expanded");
+
+        container.classList.toggle("expanded");
+        button.textContent = isExpanded ? "הצג הכל" : "הצג פחות";
+      }
+
+      // הוסף לסוף הקובץ
+      document.addEventListener("DOMContentLoaded", () => {
         loadApiKey();
+        initializeTranscribeControls();
+      });
+
+      function initializeTranscribeControls() {
+        updateTranscribeButton();
+      }
+
+      function updateTranscribeButton() {
+        // כאן תוכל להוסיף את הלוגיקה שלך לעדכון כפתור התמלול
+        console.log("Updating transcribe button");
+      }
+
+      function handleTranscribe() {
+        transcribe();
+      }
+
+      // הוספת פונקציית לבדיקת תקינות הקובץ
+      function validateAudioFile(file) {
+        const validTypes = [
+          "audio/wav",
+          "audio/mp3",
+          "audio/mpeg",
+          "audio/mp4",
+          "audio/m4a",
+        ];
+
+        if (!validTypes.includes(file.type)) {
+          throw new Error(
+            "סוג הקובץ לא נתמך. אנא השתמש בקובץ WAV, MP3, או M4A"
+          );
+        }
+
+        return true;
+      }
+
+      // הוספת פונקציה חדשה לחילוץ חלק מהאודיו
+      async function extractAudioChunk(file, start, end) {
+        return new File(
+          [file.slice(start, end)],
+          `chunk_${start}-${end}.${file.name.split(".").pop()}`,
+          { type: file.type }
+        );
+      }
+
+      // הוספת פונקציה להורדת החלקים שנשארו
+      function downloadRemainingChunks(
+        originalFile,
+        processedBytes,
+        totalChunks,
+        currentChunk
+      ) {
+        const CHUNK_SIZE = 25 * 1024 * 1024;
+        const startByte = currentChunk * CHUNK_SIZE;
+
+        const remainingFile = new File(
+          [originalFile.slice(startByte)],
+          `remaining_${originalFile.name}`,
+          { type: originalFile.type }
+        );
+
+        const url = URL.createObjectURL(remainingFile);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `remaining_${originalFile.name}`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+
+      // פונקציה להצגת דיאלוג שגיאה
+      function showErrorDialog(message) {
+        return new Promise((resolve) => {
+          const dialog = document.createElement("div");
+          dialog.className = "popup";
+          dialog.style.display = "flex";
+
+          dialog.innerHTML = `
+                    <div class="popup-content">
+                        <h3>שגיאה בתמלול</h3>
+                        <p>${message}</p>
+                        <div class="popup-footer">
+                            <button class="control-button" id="yesButton">כן, הורד</button>
+                            <button class="control-button" id="noButton">לא</button>
+                        </div>
+                    </div>
+                `;
+
+          document.body.appendChild(dialog);
+
+          // הוספת מאזינים לאירועים לכפתורים
+          document.getElementById("yesButton").onclick = () => {
+            dialog.remove();
+            resolve(true);
+          };
+
+          document.getElementById("noButton").onclick = () => {
+            dialog.remove();
+            resolve(false);
+          };
+        });
+      }
+
+      // הוספת פונקציה חדשה להורדת הסיכום
+      function downloadSummary() {
+        const summaryText =
+          document.getElementById("summaryContent").textContent;
+        if (!summaryText) {
+          showMessage("אין סיכום זמין להורדה");
+          return;
+        }
+
+        const downloadPopup = document.createElement("div");
+        downloadPopup.className = "popup";
+        downloadPopup.style.display = "flex";
+
+        // שם ברירת מחדל: שם הקובץ המקורי + "-סיכום"
+        const defaultFileName = `${
+          selectedFile ? selectedFile.name.split(".")[0] : "transcription"
+        } - סיכום`;
+
+        downloadPopup.innerHTML = `
+            <div class="popup-content">
+                <h3>הורדת סיכום</h3>
+                <div style="margin-bottom: 15px;">
+                    <label for="summaryFileName">שם הקובץ:</label>
+                    <input type="text" id="summaryFileName" value="${defaultFileName}" style="width: 100%; margin-top: 5px; padding: 5px;">
+                </div>
+                <div class="popup-footer">
+                    <button class="control-button" id="downloadSummaryBtn">
+                        <i class="fas fa-download"></i> הורד
+                    </button>
+                    <button class="control-button" id="cancelSummaryDownload">ביטול</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(downloadPopup);
+
+        document.getElementById("downloadSummaryBtn").onclick = () => {
+          const fileName =
+            document.getElementById("summaryFileName").value.trim() ||
+            defaultFileName;
+          const blob = new Blob([summaryText], { type: "text/plain" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `${fileName}.txt`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          showMessage("הסיכום הורד בהצלחה");
+          downloadPopup.remove();
+        };
+
+        document.getElementById("cancelSummaryDownload").onclick = () => {
+          downloadPopup.remove();
+        };
+      }
     </script>
-</body>
+  </body>
 </html>
