@@ -513,19 +513,32 @@
     <div id="settingsPopup" class="popup">
       <div class="popup-content">
         <h2>הגדרות</h2>
-        <label for="wordsPerSubtitle">מילים בכל כתובית:</label>
-        <select id="wordsPerSubtitle">
-          <option value="4">4</option>
-          <option value="6">6</option>
-          <option value="8" selected>8</option>
-          <option value="10">10</option>
-          <option value="12">12</option>
-        </select>
+        <div style="margin-bottom: 15px;">
+          <label for="wordsPerSubtitle">מילים בכל כתובית:</label>
+          <select id="wordsPerSubtitle">
+            <option value="4">4</option>
+            <option value="6">6</option>
+            <option value="8" selected>8</option>
+            <option value="10">10</option>
+            <option value="12">12</option>
+          </select>
+        </div>
+        <div style="margin-bottom: 15px;">
+          <label for="transcriptionLanguage">שפת התמלול:</label>
+          <select id="transcriptionLanguage">
+            <option value="auto" selected>זיהוי אוטומטי</option>
+            <option value="he">עברית</option>
+            <option value="en">אנגלית</option>
+            <option value="ar">ערבית</option>
+            <option value="ru">רוסית</option>
+            <option value="fr">צרפתית</option>
+            <option value="es">ספרדית</option>
+            <option value="de">גרמנית</option>
+          </select>
+        </div>
         <div class="popup-footer">
           <button class="control-button" onclick="saveSettings()">שמור</button>
-          <button class="control-button" onclick="closePopup('settingsPopup')">
-            ביטול
-          </button>
+          <button class="control-button" onclick="closePopup('settingsPopup')">ביטול</button>
         </div>
       </div>
     </div>
@@ -595,6 +608,7 @@
       let originalAudioFile = null;
       let originalAudioBlob = null;
       let originalWordsPerSubtitle = "8";
+      let originalLanguage = "auto";
 
       let selectedFile = null;
 
@@ -624,6 +638,7 @@
         } else if (popupId === "settingsPopup") {
           originalWordsPerSubtitle =
             document.getElementById("wordsPerSubtitle").value;
+          originalLanguage = document.getElementById("transcriptionLanguage").value;
         }
       }
 
@@ -643,6 +658,7 @@
         } else if (popupId === "settingsPopup") {
           document.getElementById("wordsPerSubtitle").value =
             originalWordsPerSubtitle;
+          document.getElementById("transcriptionLanguage").value = originalLanguage;
         }
         document.getElementById(popupId).style.display = "none";
       }
@@ -710,6 +726,7 @@
         // שמירת ההגדרות
         originalWordsPerSubtitle =
           document.getElementById("wordsPerSubtitle").value;
+        originalLanguage = document.getElementById("transcriptionLanguage").value;
         document.getElementById("settingsPopup").style.display = "none";
       }
 
@@ -909,8 +926,14 @@
         formData.append("file", chunk);
         formData.append("model", "whisper-large-v3");
         formData.append("response_format", "verbose_json");
-        formData.append("language", "he"); // הוספת שפה
-        formData.append("temperature", "0"); // הוספת טמפרטורה
+        
+        // בדיקת השפה הנבחרת
+        const selectedLanguage = document.getElementById("transcriptionLanguage").value;
+        if (selectedLanguage !== "auto") {
+          formData.append("language", selectedLanguage);
+        }
+        
+        formData.append("temperature", "0");
 
         return new Promise((resolve, reject) => {
           const xhr = new XMLHttpRequest();
